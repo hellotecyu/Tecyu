@@ -26,10 +26,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onExitAdmin, initialModu
   const [currentModule, setCurrentModule] = useState(initialModule);
   const [currentRole, setCurrentRole] = useState<UserRole>('super_admin');
 
+  const handleSelectModule = (mod: string) => {
+    setCurrentModule(mod);
+    window.location.hash = `#/homeminister/${mod}`;
+  };
+
   return (
     <AdminLayout
       currentModule={currentModule}
-      onSelectModule={setCurrentModule}
+      onSelectModule={handleSelectModule}
       onExitAdmin={onExitAdmin}
       currentRole={currentRole}
       onChangeRole={setCurrentRole}

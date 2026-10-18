@@ -172,15 +172,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   Disclaimer
                 </button>
               </li>
-              <li className="pt-2">
-                <button
-                  onClick={() => onNavigate('admin')}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded transition-colors"
-                >
-                  <ShieldCheck className="w-3 h-3 text-cyan-400" />
-                  <span>Admin Console</span>
-                </button>
-              </li>
             </ul>
           </div>
         </div>

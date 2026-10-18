@@ -191,17 +191,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
             </button>
           </nav>
 
-          {/* Zone 3: Primary Action + Quick Admin Switcher */}
+          {/* Zone 3: Primary Action */}
           <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={() => handleNavClick('admin')}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 rounded-lg transition-colors"
-              title="Access Admin Console"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-              <span>Admin Panel</span>
-            </button>
-
             <button
               onClick={() => handleNavClick('contact')}
               className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-lg shadow-xs hover:shadow-sm transition-all whitespace-nowrap cursor-pointer"
@@ -289,12 +280,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
             </button>
 
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
-              <button
-                onClick={() => handleNavClick('admin')}
-                className="w-full text-center py-2.5 px-4 text-xs font-medium text-slate-700 bg-slate-100 rounded-lg"
-              >
-                Admin Dashboard Console
-              </button>
               <button
                 onClick={() => handleNavClick('contact')}
                 className="w-full text-center py-2.5 px-4 text-xs font-semibold text-white bg-[#2563EB] rounded-lg"

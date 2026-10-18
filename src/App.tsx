@@ -15,21 +15,41 @@ import { LegalPages } from './components/legal/LegalPages';
 import { AdminPanel } from './components/admin/AdminPanel';
 
 export default function App() {
-  const [currentPath, setCurrentPath] = useState<string>(() => {
+  const getInitialPath = (): string => {
+    const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
     const hash = window.location.hash.replace(/^#\/?/, '');
-    return hash || 'home';
-  });
 
-  // Keep state in sync with URL hash
+    if (rawPath === 'homeminister' || rawPath.startsWith('homeminister/')) {
+      return rawPath;
+    }
+    if (hash === 'homeminister' || hash.startsWith('homeminister/')) {
+      return hash;
+    }
+    if (rawPath === 'admin' || rawPath.startsWith('admin/')) {
+      return rawPath.replace(/^admin/, 'homeminister');
+    }
+    if (hash === 'admin' || hash.startsWith('admin/')) {
+      return hash.replace(/^admin/, 'homeminister');
+    }
+
+    return hash || (rawPath && rawPath !== '' ? rawPath : 'home');
+  };
+
+  const [currentPath, setCurrentPath] = useState<string>(getInitialPath);
+
+  // Keep state in sync with URL hash and popstate
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace(/^#\/?/, '');
-      setCurrentPath(hash || 'home');
+    const handleRouteChange = () => {
+      setCurrentPath(getInitialPath());
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', handleRouteChange);
+    window.addEventListener('popstate', handleRouteChange);
+    return () => {
+      window.removeEventListener('hashchange', handleRouteChange);
+      window.removeEventListener('popstate', handleRouteChange);
+    };
   }, []);
 
   const navigateTo = (path: string) => {
@@ -38,8 +58,8 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If in admin mode
-  if (currentPath.startsWith('admin')) {
+  // If in secret admin mode (/homeminister)
+  if (currentPath.startsWith('homeminister') || currentPath.startsWith('admin')) {
     const adminModule = currentPath.split('/')[1] || 'overview';
     return (
       <AdminPanel

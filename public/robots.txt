@@ -1,0 +1,6 @@
+# robots.txt for https://tecyu.com
+User-agent: *
+Allow: /
+Disallow: /admin
+
+Sitemap: https://tecyu.com/sitemap.xml

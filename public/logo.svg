@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="blueCyanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <linearGradient id="darkStemGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1D4ED8"/>
+      <stop offset="60%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="600" height="200" fill="#08152F"/>
+
+  <!-- LETTER T -->
+  <path d="M 60 56 C 72 45 106 42 156 42 C 162 42 166 45 164 50 L 159 61 C 157 64 153 65 149 65 C 128 65 114 67 104 72 C 96 76 90 83 86 92 C 82 101 77 116 71 117 C 67 117 66 113 68 106 C 73 87 79 70 66 67 C 61 66 58 60 60 56 Z" fill="#FFFFFF"/>
+  <path d="M 92 68 C 103 68 105 78 101 91 C 96 105 89 117 79 119 C 75 119 74 115 76 109 C 81 93 87 77 80 67 C 84 67.5 88 67.8 92 68 Z" fill="url(#darkStemGrad)"/>
+
+  <!-- LETTER E -->
+  <path d="M 172 49 C 172 46 175 44 178 44 L 224 44 C 230 44 234 48 234 54 C 234 60 230 64 224 64 L 186 64 C 181 64 176 61 173 56 Z" fill="#FFFFFF"/>
+  <path d="M 172 77 C 172 73 176 70 180 70 L 216 70 C 222 70 226 74 226 80 C 226 86 222 90 216 90 L 186 90 C 180 90 174 86 172 80 Z" fill="#FFFFFF"/>
+  <path d="M 172 102 C 172 98 176 96 180 96 L 226 96 C 232 96 236 100 236 106 C 236 112 232 116 226 116 L 182 116 C 175 116 172 110 172 102 Z" fill="#FFFFFF"/>
+
+  <!-- LETTER C -->
+  <path d="M 310 59 C 303 49 290 42 272 42 C 245 42 228 61 228 81 C 228 101 246 118 274 118 C 293 118 306 110 312 100 C 315 96 312 91 307 91 L 292 91 C 289 91 286 93 284 95 C 281 99 277 102 272 102 C 258 102 247 92 247 81 C 247 69 258 58 272 58 C 278 58 283 61 286 65 C 288 68 292 69 295 69 L 308 69 C 312 69 314 64 310 59 Z" fill="#FFFFFF"/>
+
+  <!-- LETTER Y -->
+  <path d="M 332 45 C 336 45 340 47 342 51 L 360 80 L 378 51 C 380 47 384 45 388 45 L 402 45 C 407 45 410 51 406 55 L 372 96 L 372 113 C 372 116 369 118 366 118 L 354 118 C 351 118 348 116 348 113 L 348 96 L 315 55 C 311 51 314 45 319 45 Z" fill="url(#blueCyanGrad)"/>
+
+  <!-- LETTER U -->
+  <path d="M 418 45 C 422 45 426 48 426 53 L 426 84 C 426 97 435 103 446 103 C 457 103 466 97 466 84 L 466 53 C 466 48 470 45 474 45 L 487 45 C 491 45 495 48 495 53 L 495 84 C 495 108 475 119 446 119 C 417 119 397 108 397 84 L 397 53 C 397 48 401 45 405 45 Z" fill="url(#blueCyanGrad)"/>
+
+  <!-- TAGLINE -->
+  <text x="300" y="156" fill="#94A3B8" font-family="'Inter', sans-serif" font-size="16" font-weight="600" letter-spacing="8" text-anchor="middle">TECHNOLOGY FOR YOU</text>
+</svg>

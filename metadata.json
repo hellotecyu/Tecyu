@@ -1,0 +1,6 @@
+{
+  "name": "TECYU — Technology For You",
+  "description": "Transform your business with smart technology. Powerful websites, custom software, enterprise AI-driven automation, and digital marketing by TECYU.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

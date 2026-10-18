@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-navy: #08152F;
+  --color-navy-dark: #050E20;
+  --color-navy-light: #0D224C;
+  --color-brand-blue: #2563EB;
+  --color-brand-cyan: #06B6D4;
+  --color-bg-light: #F5F8FC;
+  --color-body-text: #172033;
+  --color-muted-text: #64748B;
+}
+
+html {
+  font-family: var(--font-sans);
+  scroll-behavior: smooth;
+  color: var(--color-body-text);
+  background-color: #FFFFFF;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-heading);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

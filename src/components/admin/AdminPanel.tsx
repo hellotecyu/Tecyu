@@ -19,12 +19,25 @@ import { AdminLogs } from './AdminLogs';
 
 interface AdminPanelProps {
   onExitAdmin: () => void;
+  onLogout: () => void;
   initialModule?: string;
+  adminUser?: {
+    id: string;
+    name: string;
+    email: string;
+    username: string;
+    role: UserRole;
+  };
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ onExitAdmin, initialModule = 'overview' }) => {
+export const AdminPanel: React.FC<AdminPanelProps> = ({
+  onExitAdmin,
+  onLogout,
+  initialModule = 'overview',
+  adminUser,
+}) => {
   const [currentModule, setCurrentModule] = useState(initialModule);
-  const [currentRole, setCurrentRole] = useState<UserRole>('super_admin');
+  const [currentRole, setCurrentRole] = useState<UserRole>(adminUser?.role || 'super_admin');
 
   const handleSelectModule = (mod: string) => {
     setCurrentModule(mod);
@@ -36,6 +49,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onExitAdmin, initialModu
       currentModule={currentModule}
       onSelectModule={handleSelectModule}
       onExitAdmin={onExitAdmin}
+      onLogout={onLogout}
+      adminUser={adminUser}
       currentRole={currentRole}
       onChangeRole={setCurrentRole}
     >

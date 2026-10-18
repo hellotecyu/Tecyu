@@ -13,6 +13,8 @@ import {
   HomepageConfig,
   LeadStatus,
   LeadPriority,
+  AdminUserAccount,
+  AdminSession,
 } from '../types';
 
 const STORAGE_KEYS = {
@@ -28,7 +30,57 @@ const STORAGE_KEYS = {
   ACTIVITIES: 'tecyu_activities_v1',
   NOTIFICATIONS: 'tecyu_notifications_v1',
   HOMEPAGE: 'tecyu_homepage_config_v1',
+  AUTH_USERS: 'tecyu_admin_users_v1',
+  AUTH_SESSION: 'tecyu_admin_session_v1',
 };
+
+export const INITIAL_ADMIN_USERS: AdminUserAccount[] = [
+  {
+    id: 'usr-superadmin-1',
+    name: 'TECYU Administrator',
+    email: 'admin@tecyu.com',
+    username: 'admin',
+    passwordHash: 'tecyu@2026',
+    role: 'super_admin',
+    createdAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'usr-ops-2',
+    name: 'Operations Lead',
+    email: 'ops@tecyu.com',
+    username: 'ops',
+    passwordHash: 'tecyu@2026',
+    role: 'admin',
+    createdAt: '2026-01-15T00:00:00.000Z',
+  },
+  {
+    id: 'usr-content-3',
+    name: 'Editorial Manager',
+    email: 'editor@tecyu.com',
+    username: 'editor',
+    passwordHash: 'tecyu@2026',
+    role: 'content_editor',
+    createdAt: '2026-02-01T00:00:00.000Z',
+  },
+  {
+    id: 'usr-sales-4',
+    name: 'Sales Director',
+    email: 'sales@tecyu.com',
+    username: 'sales',
+    passwordHash: 'tecyu@2026',
+    role: 'sales_manager',
+    createdAt: '2026-02-15T00:00:00.000Z',
+  },
+  {
+    id: 'usr-hr-5',
+    name: 'HR & People Lead',
+    email: 'hr@tecyu.com',
+    username: 'hr',
+    passwordHash: 'tecyu@2026',
+    role: 'hr_manager',
+    createdAt: '2026-03-01T00:00:00.000Z',
+  },
+];
 
 // Default initial data
 export const INITIAL_SETTINGS: SiteSettings = {
@@ -1457,6 +1509,98 @@ class LocalDatabase {
     this.set(STORAGE_KEYS.NOTIFICATIONS, notifications);
   }
 
+  // Admin Authentication & Session Management
+  getAdminUsers(): AdminUserAccount[] {
+    return this.get<AdminUserAccount[]>(STORAGE_KEYS.AUTH_USERS, INITIAL_ADMIN_USERS);
+  }
+
+  authenticate(identifier: string, password: string): { success: boolean; user?: AdminUserAccount; error?: string } {
+    const cleanId = identifier.trim().toLowerCase();
+    const users = this.getAdminUsers();
+
+    const user = users.find(
+      (u) => u.email.toLowerCase() === cleanId || u.username.toLowerCase() === cleanId
+    );
+
+    if (!user) {
+      this.logActivity('Security System', 'System', 'Failed Admin Login Attempt', `Unknown account: ${identifier}`);
+      return { success: false, error: 'Invalid email/username or password.' };
+    }
+
+    if (user.passwordHash !== password.trim()) {
+      this.logActivity(user.name, user.role, 'Failed Admin Login Attempt', 'Incorrect password entered');
+      return { success: false, error: 'Invalid email/username or password.' };
+    }
+
+    // Update lastLogin
+    user.lastLogin = new Date().toISOString();
+    this.set(STORAGE_KEYS.AUTH_USERS, users);
+
+    // Create session
+    const session: AdminSession = {
+      token: `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+      },
+      loginTime: new Date().toISOString(),
+      expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+    };
+
+    this.setSession(session);
+    this.logActivity(user.name, user.role, 'Admin Login Successful', 'Authenticated session initialized');
+
+    return { success: true, user };
+  }
+
+  getSession(): AdminSession | null {
+    const session = this.get<AdminSession | null>(STORAGE_KEYS.AUTH_SESSION, null);
+    if (!session) return null;
+    if (session.expiresAt && Date.now() > session.expiresAt) {
+      this.clearSession();
+      return null;
+    }
+    return session;
+  }
+
+  setSession(session: AdminSession): void {
+    this.set(STORAGE_KEYS.AUTH_SESSION, session);
+    window.dispatchEvent(new Event('tecyu_auth_change'));
+  }
+
+  clearSession(): void {
+    const currentSession = this.getSession();
+    if (currentSession) {
+      this.logActivity(currentSession.user.name, currentSession.user.role, 'Admin Logout', 'Session terminated');
+    }
+    localStorage.removeItem(STORAGE_KEYS.AUTH_SESSION);
+    window.dispatchEvent(new Event('tecyu_auth_change'));
+  }
+
+  updateAdminPassword(userId: string, newPassword: string): boolean {
+    const users = this.getAdminUsers();
+    const user = users.find((u) => u.id === userId);
+    if (!user) return false;
+
+    user.passwordHash = newPassword;
+    this.set(STORAGE_KEYS.AUTH_USERS, users);
+    this.logActivity(user.name, user.role, 'Password Updated', 'Admin account credentials modified');
+    return true;
+  }
+
+  updateAdminUser(userId: string, data: Partial<AdminUserAccount>): boolean {
+    const users = this.getAdminUsers();
+    const index = users.findIndex((u) => u.id === userId);
+    if (index === -1) return false;
+
+    users[index] = { ...users[index], ...data };
+    this.set(STORAGE_KEYS.AUTH_USERS, users);
+    return true;
+  }
+
   // Complete DB Reset
   resetAllData(): void {
     localStorage.removeItem(STORAGE_KEYS.SETTINGS);
@@ -1471,6 +1615,8 @@ class LocalDatabase {
     localStorage.removeItem(STORAGE_KEYS.ACTIVITIES);
     localStorage.removeItem(STORAGE_KEYS.NOTIFICATIONS);
     localStorage.removeItem(STORAGE_KEYS.HOMEPAGE);
+    localStorage.removeItem(STORAGE_KEYS.AUTH_USERS);
+    localStorage.removeItem(STORAGE_KEYS.AUTH_SESSION);
     window.dispatchEvent(new Event('tecyu_db_change'));
   }
 }

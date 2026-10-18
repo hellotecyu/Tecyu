@@ -13,8 +13,13 @@ import { BlogPage } from './components/blog/BlogPage';
 import { ContactPage } from './components/contact/ContactPage';
 import { LegalPages } from './components/legal/LegalPages';
 import { AdminPanel } from './components/admin/AdminPanel';
+import { AdminLogin } from './components/admin/AdminLogin';
+import { db } from './lib/database';
+import { AdminSession } from './types';
 
 export default function App() {
+  const [adminSession, setAdminSession] = useState<AdminSession | null>(() => db.getSession());
+
   const getInitialPath = (): string => {
     const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
     const hash = window.location.hash.replace(/^#\/?/, '');
@@ -37,18 +42,25 @@ export default function App() {
 
   const [currentPath, setCurrentPath] = useState<string>(getInitialPath);
 
-  // Keep state in sync with URL hash and popstate
+  // Keep state in sync with URL hash, popstate, and auth events
   useEffect(() => {
     const handleRouteChange = () => {
       setCurrentPath(getInitialPath());
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const handleAuthChange = () => {
+      setAdminSession(db.getSession());
+    };
+
     window.addEventListener('hashchange', handleRouteChange);
     window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener('tecyu_auth_change', handleAuthChange);
+
     return () => {
       window.removeEventListener('hashchange', handleRouteChange);
       window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener('tecyu_auth_change', handleAuthChange);
     };
   }, []);
 
@@ -60,10 +72,27 @@ export default function App() {
 
   // If in secret admin mode (/homeminister)
   if (currentPath.startsWith('homeminister') || currentPath.startsWith('admin')) {
+    // If not logged in, gate with AdminLogin
+    if (!adminSession) {
+      return (
+        <AdminLogin
+          onLoginSuccess={(session) => {
+            setAdminSession(session);
+          }}
+          onBackToSite={() => navigateTo('home')}
+        />
+      );
+    }
+
     const adminModule = currentPath.split('/')[1] || 'overview';
     return (
       <AdminPanel
         initialModule={adminModule}
+        adminUser={adminSession.user}
+        onLogout={() => {
+          db.clearSession();
+          setAdminSession(null);
+        }}
         onExitAdmin={() => navigateTo('home')}
       />
     );

@@ -9,6 +9,31 @@ export interface User {
   createdAt: string;
 }
 
+export interface AdminUserAccount {
+  id: string;
+  name: string;
+  email: string;
+  username: string;
+  passwordHash: string;
+  role: UserRole;
+  avatarUrl?: string;
+  createdAt: string;
+  lastLogin?: string;
+}
+
+export interface AdminSession {
+  token: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    username: string;
+    role: UserRole;
+  };
+  loginTime: string;
+  expiresAt: number;
+}
+
 export type LeadStatus = 'New' | 'Contacted' | 'Qualified' | 'Proposal Sent' | 'Negotiation' | 'Won' | 'Lost' | 'Closed';
 export type LeadPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
 

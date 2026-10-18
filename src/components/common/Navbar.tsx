@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TecyuLogo } from './TecyuLogo';
-import { ChevronDown, Menu, X, ArrowRight, ShieldCheck, Sparkles, Building2, Phone } from 'lucide-react';
+import { ChevronDown, Menu, X, ArrowRight, Sparkles, Building2, Phone } from 'lucide-react';
 import { db } from '../../lib/database';
 
 interface NavbarProps {

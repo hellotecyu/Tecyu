@@ -9,6 +9,8 @@ export interface User {
   createdAt: string;
 }
 
+export type AccountStatus = 'active' | 'pending_approval' | 'rejected' | 'disabled';
+
 export interface AdminUserAccount {
   id: string;
   name: string;
@@ -16,6 +18,9 @@ export interface AdminUserAccount {
   username: string;
   passwordHash: string;
   role: UserRole;
+  status: AccountStatus;
+  requestedRole?: UserRole;
+  requestNote?: string;
   avatarUrl?: string;
   createdAt: string;
   lastLogin?: string;

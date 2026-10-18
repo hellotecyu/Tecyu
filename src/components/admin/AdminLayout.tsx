@@ -37,7 +37,7 @@ interface AdminLayoutProps {
     role: UserRole;
   };
   currentRole: UserRole;
-  onChangeRole: (role: UserRole) => void;
+  onChangeRole?: (role: UserRole) => void;
   children: React.ReactNode;
 }
 
@@ -48,7 +48,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onLogout,
   adminUser,
   currentRole,
-  onChangeRole,
   children,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -230,20 +229,26 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           {/* Role switcher & notification controls */}
           <div className="flex items-center gap-4">
-            {/* Role Switcher */}
-            <div className="flex items-center gap-2 text-xs">
+            {/* Authenticated User Role Badge (Read-Only: Super Admin controls roles via Access module) */}
+            <div className="flex items-center gap-1.5 text-xs">
               <span className="text-slate-400 hidden sm:inline">Role:</span>
-              <select
-                value={currentRole}
-                onChange={(e) => onChangeRole(e.target.value as UserRole)}
-                className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-slate-50 text-slate-800 focus:outline-hidden focus:border-blue-500 cursor-pointer"
+              <span
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border ${
+                  currentRole === 'super_admin'
+                    ? 'bg-purple-50 text-purple-700 border-purple-200'
+                    : currentRole === 'admin'
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                    : currentRole === 'sales_manager'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : currentRole === 'content_editor'
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                }`}
+                title="Your assigned role. Only Super Admin can change user roles."
               >
-                <option value="super_admin">Super Admin</option>
-                <option value="admin">Admin</option>
-                <option value="content_editor">Content Editor</option>
-                <option value="sales_manager">Sales Manager</option>
-                <option value="hr_manager">HR Manager</option>
-              </select>
+                <Shield className="w-3 h-3" />
+                <span>{roleLabels[currentRole] || currentRole}</span>
+              </span>
             </div>
 
             {/* Notification Bell */}

@@ -15,6 +15,7 @@ import {
   LeadPriority,
   AdminUserAccount,
   AdminSession,
+  UserRole,
 } from '../types';
 
 const STORAGE_KEYS = {
@@ -42,6 +43,7 @@ export const INITIAL_ADMIN_USERS: AdminUserAccount[] = [
     username: 'admin',
     passwordHash: 'tecyu@2026',
     role: 'super_admin',
+    status: 'active',
     createdAt: '2026-01-01T00:00:00.000Z',
   },
   {
@@ -51,6 +53,7 @@ export const INITIAL_ADMIN_USERS: AdminUserAccount[] = [
     username: 'ops',
     passwordHash: 'tecyu@2026',
     role: 'admin',
+    status: 'active',
     createdAt: '2026-01-15T00:00:00.000Z',
   },
   {
@@ -60,6 +63,7 @@ export const INITIAL_ADMIN_USERS: AdminUserAccount[] = [
     username: 'editor',
     passwordHash: 'tecyu@2026',
     role: 'content_editor',
+    status: 'active',
     createdAt: '2026-02-01T00:00:00.000Z',
   },
   {
@@ -69,6 +73,7 @@ export const INITIAL_ADMIN_USERS: AdminUserAccount[] = [
     username: 'sales',
     passwordHash: 'tecyu@2026',
     role: 'sales_manager',
+    status: 'active',
     createdAt: '2026-02-15T00:00:00.000Z',
   },
   {
@@ -78,6 +83,7 @@ export const INITIAL_ADMIN_USERS: AdminUserAccount[] = [
     username: 'hr',
     passwordHash: 'tecyu@2026',
     role: 'hr_manager',
+    status: 'active',
     createdAt: '2026-03-01T00:00:00.000Z',
   },
 ];
@@ -1511,7 +1517,12 @@ class LocalDatabase {
 
   // Admin Authentication & Session Management
   getAdminUsers(): AdminUserAccount[] {
-    return this.get<AdminUserAccount[]>(STORAGE_KEYS.AUTH_USERS, INITIAL_ADMIN_USERS);
+    const users = this.get<AdminUserAccount[]>(STORAGE_KEYS.AUTH_USERS, INITIAL_ADMIN_USERS);
+    // Ensure every user has a status for backward compatibility
+    return users.map((u) => ({
+      ...u,
+      status: u.status || 'active',
+    }));
   }
 
   authenticate(identifier: string, password: string): { success: boolean; user?: AdminUserAccount; error?: string } {
@@ -1525,6 +1536,23 @@ class LocalDatabase {
     if (!user) {
       this.logActivity('Security System', 'System', 'Failed Admin Login Attempt', `Unknown account: ${identifier}`);
       return { success: false, error: 'Invalid email/username or password.' };
+    }
+
+    // Status check
+    if (user.status === 'pending_approval') {
+      this.logActivity(user.name, user.role, 'Login Attempt Blocked', 'Account is pending Super Admin approval');
+      return {
+        success: false,
+        error: 'Your account is pending Super Admin approval. You will be able to sign in once an administrator approves your request.',
+      };
+    }
+
+    if (user.status === 'rejected') {
+      return { success: false, error: 'Your access request was rejected. Please contact support at info@tecyu.com.' };
+    }
+
+    if (user.status === 'disabled') {
+      return { success: false, error: 'This administrator account is currently suspended. Please contact the Super Admin.' };
     }
 
     if (user.passwordHash !== password.trim()) {
@@ -1554,6 +1582,108 @@ class LocalDatabase {
     this.logActivity(user.name, user.role, 'Admin Login Successful', 'Authenticated session initialized');
 
     return { success: true, user };
+  }
+
+  // Sign-Up / Access Request
+  registerAccessRequest(data: {
+    name: string;
+    email: string;
+    username?: string;
+    password: string;
+    requestedRole: UserRole;
+    requestNote?: string;
+  }): { success: boolean; error?: string } {
+    const cleanEmail = data.email.trim().toLowerCase();
+    const cleanUsername = (data.username?.trim() || cleanEmail.split('@')[0]).toLowerCase();
+    const users = this.getAdminUsers();
+
+    if (users.some((u) => u.email.toLowerCase() === cleanEmail)) {
+      return { success: false, error: 'An account with this email address already exists.' };
+    }
+    if (users.some((u) => u.username.toLowerCase() === cleanUsername)) {
+      return { success: false, error: 'This username is already taken. Please choose another.' };
+    }
+
+    const newUser: AdminUserAccount = {
+      id: `usr-req-${Date.now()}`,
+      name: data.name.trim(),
+      email: cleanEmail,
+      username: cleanUsername,
+      passwordHash: data.password.trim(),
+      role: data.requestedRole,
+      status: 'pending_approval',
+      requestedRole: data.requestedRole,
+      requestNote: data.requestNote?.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    users.push(newUser);
+    this.set(STORAGE_KEYS.AUTH_USERS, users);
+
+    // Notify Super Admin
+    this.addNotification({
+      title: 'New Access Request',
+      message: `${data.name} (${cleanEmail}) requested ${data.requestedRole} access. Awaiting your approval.`,
+      type: 'system',
+      link: '/homeminister/users',
+    });
+    this.logActivity(data.name, 'Applicant', 'Access Request Submitted', `Requested role: ${data.requestedRole}`);
+
+    return { success: true };
+  }
+
+  // Super Admin Approval
+  approveAccessRequest(userId: string, assignedRole?: UserRole): boolean {
+    const users = this.getAdminUsers();
+    const user = users.find((u) => u.id === userId);
+    if (!user) return false;
+
+    user.status = 'active';
+    if (assignedRole) {
+      user.role = assignedRole;
+    }
+    this.set(STORAGE_KEYS.AUTH_USERS, users);
+    this.logActivity('Super Admin', 'super_admin', 'Access Request Approved', `Approved ${user.name} (${user.email}) as ${user.role}`);
+    this.addNotification({
+      title: 'User Approved',
+      message: `${user.name} has been activated with role ${user.role}.`,
+      type: 'system',
+      link: '/homeminister/users',
+    });
+    return true;
+  }
+
+  rejectAccessRequest(userId: string): boolean {
+    const users = this.getAdminUsers();
+    const user = users.find((u) => u.id === userId);
+    if (!user) return false;
+
+    user.status = 'rejected';
+    this.set(STORAGE_KEYS.AUTH_USERS, users);
+    this.logActivity('Super Admin', 'super_admin', 'Access Request Rejected', `Rejected request for ${user.name}`);
+    return true;
+  }
+
+  // Direct Password Reset
+  resetPasswordDirect(identifier: string, newPassword: string): { success: boolean; error?: string } {
+    const cleanId = identifier.trim().toLowerCase();
+    const users = this.getAdminUsers();
+    const user = users.find(
+      (u) => u.email.toLowerCase() === cleanId || u.username.toLowerCase() === cleanId
+    );
+
+    if (!user) {
+      return { success: false, error: 'No account found with this email or username.' };
+    }
+
+    if (user.status === 'pending_approval') {
+      return { success: false, error: 'This account is still awaiting approval by the administrator.' };
+    }
+
+    user.passwordHash = newPassword.trim();
+    this.set(STORAGE_KEYS.AUTH_USERS, users);
+    this.logActivity(user.name, user.role, 'Password Reset', 'Password was successfully reset');
+    return { success: true };
   }
 
   getSession(): AdminSession | null {

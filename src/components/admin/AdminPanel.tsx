@@ -37,7 +37,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   adminUser,
 }) => {
   const [currentModule, setCurrentModule] = useState(initialModule);
-  const [currentRole, setCurrentRole] = useState<UserRole>(adminUser?.role || 'super_admin');
+  // Strict RBAC: Role is fixed from authenticated user record, cannot be manipulated by client
+  const currentRole: UserRole = adminUser?.role || 'admin';
 
   const handleSelectModule = (mod: string) => {
     setCurrentModule(mod);
@@ -57,7 +58,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       onLogout={onLogout}
       adminUser={adminUser}
       currentRole={currentRole}
-      onChangeRole={setCurrentRole}
     >
       {currentModule === 'overview' && (
         <AdminDashboardOverview onNavigateModule={setCurrentModule} />

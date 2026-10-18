@@ -41,7 +41,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleSelectModule = (mod: string) => {
     setCurrentModule(mod);
-    window.location.hash = `#/homeminister/${mod}`;
+    const targetUrl = mod === 'overview' ? '/homeminister' : `/homeminister/${mod}`;
+    try {
+      window.history.pushState(null, '', targetUrl);
+    } catch {
+      // fallback if pushState is restricted
+    }
   };
 
   return (

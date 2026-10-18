@@ -24,12 +24,15 @@ export default function App() {
     const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
     const hash = window.location.hash.replace(/^#\/?/, '');
 
+    // 1. Direct path check (e.g. /homeminister or /homeminister/leads)
     if (rawPath === 'homeminister' || rawPath.startsWith('homeminister/')) {
       return rawPath;
     }
+    // 2. Hash fallback (e.g. #/homeminister -> auto-converted to clean path)
     if (hash === 'homeminister' || hash.startsWith('homeminister/')) {
       return hash;
     }
+    // 3. Legacy admin redirect
     if (rawPath === 'admin' || rawPath.startsWith('admin/')) {
       return rawPath.replace(/^admin/, 'homeminister');
     }
@@ -37,13 +40,24 @@ export default function App() {
       return hash.replace(/^admin/, 'homeminister');
     }
 
-    return hash || (rawPath && rawPath !== '' ? rawPath : 'home');
+    return rawPath || hash || 'home';
   };
 
   const [currentPath, setCurrentPath] = useState<string>(getInitialPath);
 
-  // Keep state in sync with URL hash, popstate, and auth events
+  // Sync state and automatically clean hash (#) from address bar if present
   useEffect(() => {
+    // If user opened with #/homeminister or any hash, clean the URL to /homeminister
+    if (window.location.hash) {
+      const initial = getInitialPath();
+      const targetUrl = initial === '' || initial === 'home' ? '/' : `/${initial}`;
+      try {
+        window.history.replaceState(null, '', targetUrl);
+      } catch {
+        // ignore
+      }
+    }
+
     const handleRouteChange = () => {
       setCurrentPath(getInitialPath());
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -53,20 +67,28 @@ export default function App() {
       setAdminSession(db.getSession());
     };
 
-    window.addEventListener('hashchange', handleRouteChange);
     window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener('hashchange', handleRouteChange);
     window.addEventListener('tecyu_auth_change', handleAuthChange);
 
     return () => {
-      window.removeEventListener('hashchange', handleRouteChange);
       window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener('hashchange', handleRouteChange);
       window.removeEventListener('tecyu_auth_change', handleAuthChange);
     };
   }, []);
 
   const navigateTo = (path: string) => {
-    window.location.hash = `#/${path}`;
-    setCurrentPath(path);
+    const normalized = path.replace(/^\/+/, '').replace(/\/+$/, '');
+    const targetUrl = normalized === '' || normalized === 'home' ? '/' : `/${normalized}`;
+
+    try {
+      window.history.pushState(null, '', targetUrl);
+    } catch {
+      // In restricted iframes fallback gracefully
+      window.location.hash = targetUrl;
+    }
+    setCurrentPath(normalized || 'home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -78,6 +100,11 @@ export default function App() {
         <AdminLogin
           onLoginSuccess={(session) => {
             setAdminSession(session);
+            try {
+              window.history.replaceState(null, '', '/homeminister');
+            } catch {
+              // ignore
+            }
           }}
           onBackToSite={() => navigateTo('home')}
         />
@@ -92,6 +119,11 @@ export default function App() {
         onLogout={() => {
           db.clearSession();
           setAdminSession(null);
+          try {
+            window.history.replaceState(null, '', '/homeminister');
+          } catch {
+            // ignore
+          }
         }}
         onExitAdmin={() => navigateTo('home')}
       />

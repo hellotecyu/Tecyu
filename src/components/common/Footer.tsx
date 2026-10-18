@@ -178,7 +178,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div>{settings.copyrightText}</div>
+          <div className="flex items-center gap-2">
+            <span>{settings.copyrightText}</span>
+            <button
+              onClick={() => onNavigate('homeminister')}
+              className="text-slate-700 hover:text-cyan-400 p-0.5 rounded transition-colors cursor-pointer"
+              title="Staff Portal (Restricted)"
+              aria-label="Staff Portal"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 opacity-30 hover:opacity-100 transition-opacity" />
+            </button>
+          </div>
           <div className="flex items-center gap-6">
             <a href={settings.linkedinUrl} target="_blank" rel="noreferrer" className="hover:text-slate-300 transition-colors">
               LinkedIn

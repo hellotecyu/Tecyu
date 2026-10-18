@@ -21,43 +21,52 @@ export default function App() {
   const [adminSession, setAdminSession] = useState<AdminSession | null>(() => db.getSession());
 
   const getInitialPath = (): string => {
-    const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
-    const hash = window.location.hash.replace(/^#\/?/, '');
+    // 1. Search param check: ?page=homeminister or ?homeminister or ?admin
+    try {
+      const search = window.location.search;
+      if (search) {
+        const params = new URLSearchParams(search);
+        const pageParam = params.get('page') || params.get('route');
+        if (pageParam === 'homeminister' || pageParam?.startsWith('homeminister/')) {
+          return pageParam;
+        }
+        if (params.has('homeminister') || params.has('admin')) {
+          return 'homeminister';
+        }
+      }
+    } catch {
+      // ignore
+    }
 
-    // 1. Direct path check (e.g. /homeminister or /homeminister/leads)
+    // 2. Hash check (supports #/homeminister, #homeminister, #/admin)
+    const rawHash = (window.location.hash || '').replace(/^#\/?/, '').replace(/\/+$/, '');
+    if (rawHash === 'homeminister' || rawHash.startsWith('homeminister/')) {
+      return rawHash;
+    }
+    if (rawHash === 'admin' || rawHash.startsWith('admin/')) {
+      return rawHash.replace(/^admin/, 'homeminister');
+    }
+
+    // 3. Pathname check: strip leading & trailing slashes and index.html
+    let rawPath = (window.location.pathname || '')
+      .replace(/^\/+/, '')
+      .replace(/\/+$/, '')
+      .replace(/^index\.html\/?/, '');
+
     if (rawPath === 'homeminister' || rawPath.startsWith('homeminister/')) {
       return rawPath;
     }
-    // 2. Hash fallback (e.g. #/homeminister -> auto-converted to clean path)
-    if (hash === 'homeminister' || hash.startsWith('homeminister/')) {
-      return hash;
-    }
-    // 3. Legacy admin redirect
     if (rawPath === 'admin' || rawPath.startsWith('admin/')) {
       return rawPath.replace(/^admin/, 'homeminister');
     }
-    if (hash === 'admin' || hash.startsWith('admin/')) {
-      return hash.replace(/^admin/, 'homeminister');
-    }
 
-    return rawPath || hash || 'home';
+    return rawPath || rawHash || 'home';
   };
 
   const [currentPath, setCurrentPath] = useState<string>(getInitialPath);
 
-  // Sync state and automatically clean hash (#) from address bar if present
+  // Sync state and listen to history events
   useEffect(() => {
-    // If user opened with #/homeminister or any hash, clean the URL to /homeminister
-    if (window.location.hash) {
-      const initial = getInitialPath();
-      const targetUrl = initial === '' || initial === 'home' ? '/' : `/${initial}`;
-      try {
-        window.history.replaceState(null, '', targetUrl);
-      } catch {
-        // ignore
-      }
-    }
-
     const handleRouteChange = () => {
       setCurrentPath(getInitialPath());
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -67,14 +76,24 @@ export default function App() {
       setAdminSession(db.getSession());
     };
 
+    // Secret Admin Shortcut: Ctrl+Shift+H or Cmd+Shift+H (or Ctrl+Shift+A)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key.toLowerCase() === 'h' || e.key.toLowerCase() === 'a')) {
+        e.preventDefault();
+        navigateTo('homeminister');
+      }
+    };
+
     window.addEventListener('popstate', handleRouteChange);
     window.addEventListener('hashchange', handleRouteChange);
     window.addEventListener('tecyu_auth_change', handleAuthChange);
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('popstate', handleRouteChange);
       window.removeEventListener('hashchange', handleRouteChange);
       window.removeEventListener('tecyu_auth_change', handleAuthChange);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -85,7 +104,7 @@ export default function App() {
     try {
       window.history.pushState(null, '', targetUrl);
     } catch {
-      // In restricted iframes fallback gracefully
+      // In restricted iframes fallback to hash
       window.location.hash = targetUrl;
     }
     setCurrentPath(normalized || 'home');
